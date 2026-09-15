@@ -883,8 +883,13 @@ const equipos = [
   },
   {
     id:9, num:9, x:980, y:255, name:"Tanque de almacenamiento de petróleo",
-    desc:"Almacena el petróleo tratado antes de su transferencia. Funciona como un 'pulmón operativo': los pozos producen de forma continua mientras que la transferencia puede hacerse en otros períodos o caudales."
-  },
+    desc:"Almacena el petróleo tratado antes de su transferencia. Funciona como un 'pulmón operativo': los pozos producen de forma continua mientras que la transferencia puede hacerse en otros períodos o caudales.",
+  trial:{
+  type:"prueba",
+  title:"Ensayo: barra de prueba",
+  controls:[{id:"valor", label:"Valor de prueba", unit:"", min:0, max:100, step:1, def:50}]
+}
+},
   {
     id:10, num:10, x:800, y:400, name:"Bomba de recirculación",
     desc:"Recircula parte del fluido dentro del sistema de acondicionamiento para mejorar la separación o controlar niveles, y envía agua hacia la bomba de inyección de química del circuito auxiliar de agua producida."
