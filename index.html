@@ -879,7 +879,12 @@ const equipos = [
   },
   {
     id:8, num:8, x:850, y:290, name:"Tanque de lavado",
-    desc:"Proporciona tiempo de residencia suficiente para que el petróleo termine de separarse del agua remanente que no quedó retenida en el separador trifásico."
+       desc:"Proporciona tiempo de residencia suficiente para que el petróleo termine de separarse del agua remanente que no quedó retenida en el separador trifásico.",
+    trial:{
+      type:"tanque_lavado",
+      title:"Ensayo: tiempo de residencia en el tanque de lavado",
+      controls:[{id:"tiempo", label:"Tiempo de residencia", unit:"h", min:1, max:24, step:1, def:8}]
+    }
   },
   {
     id:9, num:9, x:980, y:255, name:"Tanque de almacenamiento de petróleo",
@@ -1321,7 +1326,19 @@ function runTrial(eq){
     else { verdict="Temperatura excesiva: hay riesgo de vaporizar componentes livianos y mayor consumo energético."; cls="mid"; }
     out += `<div class="verdict ${cls}">${verdict}</div>`;
   }
-
+if(eq.trial.type === "tanque_lavado"){
+    const t = s.tiempo;
+    let bsw = 6 * Math.exp(-t/6);
+    bsw = Math.max(0.3, bsw);
+    let eff = Math.max(0, Math.min(99, 100 - bsw*10));
+    out += resultRow("Agua y sedimentos remanente (BS&W)", bsw.toFixed(1)+"%", 100-bsw*10, "var(--water)");
+    out += resultRow("Eficiencia de decantación", eff.toFixed(0)+"%", eff, "var(--chem)");
+    let verdict, cls;
+    if(t<4){ verdict="Tiempo de residencia insuficiente: el petróleo sale con agua y sedimentos por encima de la especificación de venta (menos de 1% de BS&W)."; cls="bad"; }
+    else if(t<=14){ verdict="Tiempo de residencia adecuado: buena decantación, BS&W dentro de especificación."; cls="good"; }
+    else { verdict="Tiempo de residencia excesivo: la calidad ya no mejora de forma significativa, pero reduce la capacidad efectiva del tanque para el caudal que sigue llegando desde el calentador."; cls="mid"; }
+    out += `<div class="verdict ${cls}">${verdict}</div>`;
+  }
   if(eq.trial.type === "separador"){
     const q = s.caudal;
     let eff = 98 - (q-50)/450*45;
