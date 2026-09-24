@@ -549,6 +549,11 @@
       <div class="zone-label" style="width:250px;">6. DESPACHO</div>
     </div>
     <svg id="plant" viewBox="0 0 1360 660" width="1360" height="660">
+      <defs>
+        <pattern id="diquePattern" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="var(--data)" stroke-width="1" opacity="0.4"/>
+        </pattern>
+      </defs>
       <!-- zone backgrounds -->
       <rect class="zone-bg" x="0" y="0" width="210" height="440"></rect>
       <rect class="zone-bg alt" x="210" y="0" width="220" height="440"></rect>
@@ -556,9 +561,12 @@
       <rect class="zone-bg alt" x="650" y="0" width="260" height="440"></rect>
       <rect class="zone-bg" x="910" y="0" width="200" height="440"></rect>
       <rect class="zone-bg alt" x="1110" y="0" width="250" height="440"></rect>
-
+      
+      <!-- zona de contención del tanque 9 (equipo 9.5) -->
+      <rect x="925" y="205" width="110" height="100" rx="10" fill="url(#diquePattern)" stroke="var(--data)" stroke-width="1.5"/>
+      
       <!-- ===================== PIPES ===================== -->
-
+      
       <!-- pozo de petróleo (1) -> registradores (3) -->
       <path class="pipe oil flow" d="M90,190 L90,240 L245,240 L245,262"/>
       <!-- registradores (3) -> manifold vertical (4), entra por abajo -->
@@ -912,8 +920,12 @@ const equipos = [
   {
     id:9, num:9, x:980, y:255, name:"Tanque de almacenamiento de petróleo",
     desc:"Almacena el petróleo tratado antes de su transferencia. Funciona como un 'pulmón operativo': los pozos producen de forma continua mientras que la transferencia puede hacerse en otros períodos o caudales.",
-    trial:{ custom:"tanque9", title:"Ensayo: nivel del tanque (radar de ondas)" 
-   }
+    trial:{ custom:"tanque9", title:"Ensayo: nivel del tanque (radar de ondas)" }
+  },
+   {
+    id:9.5, num:9.5, x:1012, y:288, name:"Zona de contención",
+    shape:"rect", w:34, h:22,
+    desc:"Dique perimetral que rodea al tanque de almacenamiento (9). Su función es contener el petróleo en caso de una rotura o derrame, evitando que se derrame sobre el resto de la planta o el terreno. Por norma, se dimensiona para contener al menos el 110% del volumen del tanque que protege."
   },
   {
     id:10, num:10, x:800, y:400, name:"Bomba de recirculación",
