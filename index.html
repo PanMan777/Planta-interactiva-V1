@@ -197,8 +197,6 @@
   /* ---- Panel ---- */
   .panel{
     background:var(--panel);
-    border-left:1px solid var(--line);
-    padding:24px 22px;
     min-height:520px;
   }
   .panel .empty{
@@ -215,6 +213,8 @@
     display:block;
     margin-bottom:8px;
   }
+    border-left:1px solid var(--line);
+    padding:24px 22px;
   .panel-eyebrow{
     font-family:'IBM Plex Mono', monospace;
     font-size:11px;
@@ -360,6 +360,29 @@
   .gl-particle{ animation:flowDown linear infinite; }
   @keyframes flowDown{ from{transform:translateY(0);} to{transform:translateY(340px);} }
   .gauge-needle{ transform-origin:195px 70px; transition:transform .3s ease; }
+  .level-badge{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:4px 10px; border-radius:999px; font-family:'IBM Plex Mono', monospace;
+    font-size:11px; font-weight:600; margin-bottom:14px;
+    background:var(--panel-2); border:1px solid var(--line);
+  }
+  .level-badge .dot{ width:7px; height:7px; border-radius:50%; background:var(--chem); }
+  .level-badge button{
+    margin-left:6px; border:none; background:transparent; color:var(--ink-dim);
+    cursor:pointer; font-size:13px;
+  }
+  @keyframes pulseAlarm{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .wave{
+    animation:waveTravel linear infinite;
+    transform-origin:0 0;
+  }
+  @keyframes waveTravel{
+    0%    { transform:translateY(0) scaleY(1); opacity:0.9; }
+    50%   { transform:translateY(var(--wave-dist,200px)) scaleY(1); opacity:0.9; }
+    50.01%{ transform:translateY(var(--wave-dist,200px)) scaleY(-1); opacity:0.9; }
+    85%   { transform:translateY(calc(var(--wave-dist,200px) * 0.15)) scaleY(-1); opacity:0.9; }
+    100%  { transform:translateY(0) scaleY(-1); opacity:0; }
+  }
 
   /* ---- Secciones inferiores: despiece + parámetros ---- */
   .section{
@@ -888,7 +911,9 @@ const equipos = [
   },
   {
     id:9, num:9, x:980, y:255, name:"Tanque de almacenamiento de petróleo",
-    desc:"Almacena el petróleo tratado antes de su transferencia. Funciona como un 'pulmón operativo': los pozos producen de forma continua mientras que la transferencia puede hacerse en otros períodos o caudales."
+    desc:"Almacena el petróleo tratado antes de su transferencia. Funciona como un 'pulmón operativo': los pozos producen de forma continua mientras que la transferencia puede hacerse en otros períodos o caudales.",
+    trial:{ custom:"tanque9", title:"Ensayo: nivel del tanque (radar de ondas)" 
+   }
   },
   {
     id:10, num:10, x:800, y:400, name:"Bomba de recirculación",
@@ -1059,6 +1084,7 @@ function selectEquipo(id){
 
 function renderPanel(eq){
   const panel = document.getElementById("panel");
+  if(tanque9AlarmTimer){ clearInterval(tanque9AlarmTimer); tanque9AlarmTimer = null; }
   let html = `
     <div class="panel-eyebrow">EQUIPO N.° ${eq.num}</div>
     <h2>${eq.name}</h2>
@@ -1069,6 +1095,13 @@ function renderPanel(eq){
     html += pozoArbolMarkup(eq);
     panel.innerHTML = html;
     setupPozoArbol();
+    return;
+  }
+  
+  if(eq.trial && eq.trial.custom === "tanque9"){
+    html += tanque9Markup(eq);
+    panel.innerHTML = html;
+    setupTanque9();
     return;
   }
 
@@ -1087,6 +1120,7 @@ function renderPanel(eq){
    ============================================================ */
 
 const trialState = {};
+let tanque9AlarmTimer = null;
 
 function buildTrial(eq){
   const controlsDiv = document.getElementById("controls");
@@ -1296,7 +1330,169 @@ function setupPozoArbol(){
   gasliftSlider.addEventListener("input", update);
   update();
 }
+function tanque9Markup(eq){
+  return `
+  <div class="trial-box" id="trialBox">
+    <h3>${eq.trial.title}</h3>
+    <div class="level-badge" id="levelBadge">
+      <span class="dot" id="levelDot"></span>
+      <span id="levelBadgeText">Operación normal</span>
+      <button id="muteBtn" type="button" title="Silenciar alarma">🔊</button>
+    </div>
+    <div class="well-wrap">
+      <svg class="well-svg" viewBox="0 0 440 420" id="tank9Svg">
+        <defs>
+          <g id="tanque9WaveShape">
+            <path d="M -8 0 Q 0 5.6 8 0" stroke="var(--water)" stroke-width="2" fill="none" opacity="0.95"/>
+            <path d="M -15 0 Q 0 10.5 15 0" stroke="var(--water)" stroke-width="2" fill="none" opacity="0.7"/>
+            <path d="M -22 0 Q 0 15.4 22 0" stroke="var(--water)" stroke-width="2" fill="none" opacity="0.45"/>
+            <path d="M -29 0 Q 0 20.3 29 0" stroke="var(--water)" stroke-width="2" fill="none" opacity="0.25"/>
+          </g>
+        </defs>
+        <rect x="140" y="18" width="60" height="20" rx="4" fill="var(--panel-2)" stroke="var(--data)" stroke-width="1.5"/>
+        <text x="170" y="32" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink-dim)">RADAR</text>
+        <line x1="170" y1="38" x2="170" y2="380" stroke="var(--data)" stroke-width="1" stroke-dasharray="2 3" opacity="0.35"/>
+        <rect x="20" y="40" width="300" height="340" rx="4" fill="none" stroke="var(--data)" stroke-width="1.5"/>
+        <rect id="tk9Liquid" x="21.5" y="380" width="297" height="0" fill="var(--oil)"/>
 
+        <line x1="20" x2="320" y1="47" y2="47" stroke="var(--danger)" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <text x="326" y="50" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink-dim)">98% límite máx</text>
+        <line x1="20" x2="320" y1="57" y2="57" stroke="#F0997B" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <text x="326" y="60" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink-dim)">95% alta-alta</text>
+        <line x1="20" x2="320" y1="74" y2="74" stroke="var(--amber)" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <text x="326" y="77" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink-dim)">90% alarma alta</text>
+        <line x1="20" x2="320" y1="91" y2="91" stroke="var(--chem)" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <text x="326" y="94" font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink-dim)">85% normal</text>
+
+        <g transform="translate(170,38)"><use href="#tanque9WaveShape" class="wave" style="animation-delay:0s"/></g>
+        <g transform="translate(170,38)"><use href="#tanque9WaveShape" class="wave" style="animation-delay:-0.55s"/></g>
+        <g transform="translate(170,38)"><use href="#tanque9WaveShape" class="wave" style="animation-delay:-1.1s"/></g>
+        <g transform="translate(170,38)"><use href="#tanque9WaveShape" class="wave" style="animation-delay:-1.65s"/></g>
+        <g transform="translate(170,38)"><use href="#tanque9WaveShape" class="wave" style="animation-delay:-2.2s"/></g>
+        <g transform="translate(170,38)"><use href="#tanque9WaveShape" class="wave" style="animation-delay:-2.75s"/></g>
+      </svg>
+
+      <div class="well-controls">
+        <div class="field">
+          <label>Contenido del tanque <span class="val" id="tk9LevelVal">55%</span></label>
+          <input type="range" id="tk9LevelSlider" min="2" max="99" step="1" value="55">
+        </div>
+        <div class="no-trial-note">Capacidad total: 10.000 m³ = 10.000.000 L. El radar mide la distancia hasta la superficie con una señal de velocidad constante; a menor distancia, menor tiempo de retorno y mayor contenido.</div>
+      </div>
+    </div>
+    <div class="result" id="tk9Result"></div>
+  </div>`;
+}
+
+function setupTanque9(){
+  const slider = document.getElementById("tk9LevelSlider");
+  const levelVal = document.getElementById("tk9LevelVal");
+  const liquid = document.getElementById("tk9Liquid");
+  const svg = document.getElementById("tank9Svg");
+  const waves = document.querySelectorAll(".wave");
+  const badge = document.getElementById("levelBadge");
+  const dot = document.getElementById("levelDot");
+  const badgeText = document.getElementById("levelBadgeText");
+  const muteBtn = document.getElementById("muteBtn");
+  const resultDiv = document.getElementById("tk9Result");
+
+  const tankBottom = 380, tankHeight = 340, emitterY = 38, speed = 220, capacityL = 10000000;
+  let level = Number(slider.value);
+  let muted = false;
+  let audioCtx = null;
+  let currentTier = -1;
+
+  function ensureAudio(){
+    if(!audioCtx){
+      try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch(e){ audioCtx = null; }
+    } else if(audioCtx.state === "suspended"){
+      audioCtx.resume();
+    }
+  }
+  function beep(freq, dur){
+    if(!audioCtx || muted) return;
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.12, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur/1000);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur/1000 + 0.02);
+  }
+  muteBtn.addEventListener("click", ()=>{
+    muted = !muted;
+    muteBtn.textContent = muted ? "🔇" : "🔊";
+  });
+
+  const tiers = [
+    {label:"Operación normal", color:"var(--chem)"},
+    {label:"ALARMA ALTA", color:"var(--amber)", freq:520, interval:1000, dur:120},
+    {label:"ALARMA ALTA-ALTA", color:"var(--gas)", freq:720, interval:600, dur:140},
+    {label:"CERCA DEL LÍMITE", color:"var(--danger)", freq:920, interval:350, dur:160},
+    {label:"LÍMITE OPERATIVO MÁXIMO", color:"var(--danger)", freq:1100, interval:200, dur:180}
+  ];
+  function tierIndex(lvl){
+    if(lvl>98) return 4;
+    if(lvl>95) return 3;
+    if(lvl>90) return 2;
+    if(lvl>85) return 1;
+    return 0;
+  }
+  function applyTier(idx){
+    const t = tiers[idx];
+    badge.style.color = t.color;
+    dot.style.background = t.color;
+    badgeText.textContent = t.label;
+    badge.style.animation = idx > 0 ? ("pulseAlarm " + Math.max(0.35, (t.interval||1000)/1000) + "s infinite") : "none";
+    if(tanque9AlarmTimer){ clearInterval(tanque9AlarmTimer); tanque9AlarmTimer = null; }
+    if(idx > 0){
+      beep(t.freq, t.dur);
+      tanque9AlarmTimer = setInterval(function(){ beep(t.freq, t.dur); }, t.interval);
+    }
+  }
+
+  function surfaceY(lvl){ return tankBottom - (lvl/100*tankHeight); }
+
+  function update(){
+    const y = surfaceY(level);
+    liquid.setAttribute("y", y);
+    liquid.setAttribute("height", tankBottom - y);
+    levelVal.textContent = level + "%";
+
+    const dist = y - emitterY;
+    const period = Math.max(dist/speed*2, 0.3);
+    svg.style.setProperty("--wave-dist", dist.toFixed(1)+"px");
+    waves.forEach(function(w){ w.style.animationDuration = period.toFixed(2)+"s"; });
+
+    const idx = tierIndex(level);
+    if(idx !== currentTier){ currentTier = idx; applyTier(idx); }
+
+    const liters = Math.round(level/100*capacityL);
+    let out = resultRow("Contenido calculado", new Intl.NumberFormat("es-AR").format(liters)+" L", level, "var(--water)");
+    out += resultRow("Tiempo de ida y vuelta de la onda", Math.round(period*1000)+" ms", Math.min(100, period/3*100), "var(--data)");
+    let verdict, cls;
+    if(level<=85){ verdict="Nivel dentro del rango de operación normal."; cls="good"; }
+    else if(level<=90){ verdict="Nivel por encima del 85%: se activó la alarma alta. Conviene habilitar la transferencia para bajar el nivel."; cls="mid"; }
+    else if(level<=95){ verdict="Alarma alta-alta: el tanque se está acercando a su límite operativo. Hay que transferir petróleo con urgencia."; cls="bad"; }
+    else if(level<=98){ verdict="Muy cerca del límite operativo máximo (98%): riesgo real de sobrellenado si no se libera caudal hacia la bomba de transferencia."; cls="bad"; }
+    else { verdict="Límite operativo máximo superado: en una planta real, acá el tanque corre riesgo de derrame o rotura."; cls="bad"; }
+    resultDiv.innerHTML = out + `<div class="verdict ${cls}">${verdict}</div>`;
+  }
+
+  slider.addEventListener("input", function(){
+    ensureAudio();
+    level = Number(slider.value);
+    update();
+  });
+
+  update();
+}
+  
 function resultRow(label, value, pct, color){
   return `
     <div class="row">
