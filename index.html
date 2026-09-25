@@ -934,6 +934,11 @@ const equipos = [
   {
     id:11, num:11, x:1230, y:262, name:"Bomba de transferencia",
     desc:"Toma el petróleo almacenado y le da la energía necesaria para impulsarlo hacia el oleoducto o destino final. Se ubica cerca del tanque para minimizar pérdidas de carga y riesgo de cavitación."
+    trial:{
+      type:"bomba_transferencia",
+      title:"Resultado: calidad del petróleo transferido",
+      controls:[]
+    } 
   },
   {
     id:19, num:19, x:1230, y:140, name:"Sala de Control",
@@ -1547,6 +1552,20 @@ if(eq.trial.type === "tanque_lavado"){
     else { verdict="Tiempo de residencia excesivo: la calidad ya no mejora de forma significativa, pero reduce la capacidad efectiva del tanque para el caudal que sigue llegando desde el calentador."; cls="mid"; }
     out += `<div class="verdict ${cls}">${verdict}</div>`;
   }
+  if(eq.trial.type === "bomba_transferencia"){
+    const t = (trialState[8] && typeof trialState[8].tiempo === "number") ? trialState[8].tiempo : 8;
+    let bsw = 6 * Math.exp(-t/6);
+    bsw = Math.max(0.3, bsw);
+    let eff = Math.max(0, Math.min(99, 100 - bsw*10));
+    out += `<div class="no-trial-note">Este resultado depende del tiempo de residencia configurado en el tanque de lavado (equipo 8). Valor actual: ${t} h.</div>`;
+    out += resultRow("Agua y sedimentos transferidos (BS&W)", bsw.toFixed(1)+"%", 100-bsw*10, "var(--water)");
+    out += resultRow("Calidad del petróleo transferido", eff.toFixed(0)+"%", eff, "var(--chem)");
+    let verdict, cls;
+    if(t<4){ verdict="El crudo llega a la bomba de transferencia fuera de especificación de venta (BS&W mayor a 1%), porque el tanque de lavado no tuvo tiempo de residencia suficiente."; cls="bad"; }
+    else if(t<=14){ verdict="El crudo transferido cumple la especificación de venta: buena decantación aguas arriba, en el tanque de lavado."; cls="good"; }
+    else { verdict="El crudo cumple la especificación, aunque el tiempo de residencia usado en el tanque de lavado fue mayor al necesario."; cls="mid"; }
+    out += `<div class="verdict ${cls}">${verdict}</div>`;
+  }
   if(eq.trial.type === "separador"){
     const q = s.caudal;
     let eff = 98 - (q-50)/450*45;
@@ -1562,7 +1581,6 @@ if(eq.trial.type === "tanque_lavado"){
     else { verdict="Caudal alto: el fluido pasa demasiado rápido, se reduce el tiempo de residencia y baja la calidad de separación."; cls="bad"; }
     out += `<div class="verdict ${cls}">${verdict}</div>`;
   }
-
   if(eq.trial.type === "quimica_proceso"){
     const dosis = s.dosis;
     let eff = 0, label = "";
